@@ -1,8 +1,10 @@
-import User from '../models/User.js';
+import User from '../models/user.js';
 import dotenv from 'dotenv';
 dotenv.config();
 import jwt from 'jsonwebtoken';
 import { upsertStreamUser } from '../lib/stream.js';
+
+
 
 export async function signup(req,res) {
 
@@ -108,4 +110,39 @@ export async function login(req,res) {
 export function logout(req,res) {
     res.clearCookie("jwt")
     res.status(200).json({ success:true ,message: "Logged out successfully" });
+}
+
+export async function onboard (req, res) {
+    try {
+        const userId = req.user._id; // Assuming req.user is set by protectRoute middleware
+        const { fullName, bio, nativeLanguage , learningLanguage , location} = req.body;
+
+        if(!fullName || !bio || !nativeLanguage || !learningLanguage || !location) {
+            return res.status(400).json({ message: "Please fill all the fields",
+                missingFields:[
+                    !fullName && "fullName",
+                    !bio && "bio",  
+                    !nativeLanguage && "nativeLanguage",
+                    !learningLanguage && "learningLanguage",
+                    !location && "location"
+                ],
+             });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            ...req.body,
+            isOnboarded: true   
+        } , { new: true });// new:true returns the updated user
+
+        if(!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        //update stream user as well
+
+        res.status(200).json({ success: true, user: updatedUser });
+
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error" });
+    }
 }
