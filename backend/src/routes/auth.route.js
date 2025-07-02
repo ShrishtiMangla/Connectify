@@ -11,6 +11,10 @@ router.post("/logout", logout);
 
 router.post("/onboarding", protectRoute,onboard);
 
+//forget-password
+//send reset password email
+
+
 router.get("/me", protectRoute, (req, res) => {
     res.status(200).json({ user: req.user });
 });
